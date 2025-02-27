@@ -8,6 +8,7 @@ const eventSchema = new mongoose.Schema({
   organizer: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true }, // Reference to organizer User
   participants: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],       // Array of participant User references
   capacity: { type: Number, default: 0 }, // Optional: Event capacity
+  thumbnail: { type: String }, // **NEW: Thumbnail URL field**
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now },
 }, {

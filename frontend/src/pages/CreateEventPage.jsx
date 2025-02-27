@@ -18,9 +18,11 @@ const CreateEventPage = () => {
   };
 
   return (
-    <div>
-      <h2>Create New Event</h2>
-      <EventForm onSubmit={handleCreateEvent} />
+    <div className="container mx-auto px-4  w-[60%] py-10">
+      <h2 className="text-3xl font-semibold text-gray-800 mb-6">Create New Event</h2>
+      <div className="bg-white shadow-md rounded-lg p-6 mx-auto">
+        <EventForm onSubmit={handleCreateEvent} />
+      </div>
     </div>
   );
 };

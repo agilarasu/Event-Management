@@ -5,7 +5,7 @@ const User = require('../models/User');
 // @route   POST /api/events
 // @access  Private (Organizer role)
 const createEvent = async (req, res) => {
-  const { title, description, date, location, capacity } = req.body;
+  const { title, description, date, location, capacity, thumbnail } = req.body; // **Extract thumbnail from req.body**
 
   try {
     const event = new Event({
@@ -14,6 +14,7 @@ const createEvent = async (req, res) => {
       date,
       location,
       capacity,
+      thumbnail, // **Include thumbnail in event creation**
       organizer: req.user._id, // Logged-in user is the organizer
     });
 
@@ -62,7 +63,7 @@ const getEventById = async (req, res) => {
 // @route   PUT /api/events/:id
 // @access  Private (Organizer of the event)
 const updateEvent = async (req, res) => {
-  const { title, description, date, location, capacity } = req.body;
+  const { title, description, date, location, capacity, thumbnail } = req.body; // **Extract thumbnail from req.body**
 
   try {
     const event = await Event.findById(req.params.id);
@@ -76,7 +77,8 @@ const updateEvent = async (req, res) => {
       event.description = description || event.description;
       event.date = date || event.date;
       event.location = location || event.location;
-      event.capacity = capacity === undefined ? event.capacity : capacity; // Allow capacity to be set to 0
+      event.capacity = capacity === undefined ? event.capacity : capacity;
+      event.thumbnail = thumbnail || event.thumbnail; // **Update thumbnail if provided**
 
       const updatedEvent = await event.save();
       res.json(updatedEvent);
@@ -87,6 +89,7 @@ const updateEvent = async (req, res) => {
     res.status(500).json({ message: 'Server Error', error: error.message });
   }
 };
+
 
 // @desc    Delete an event
 // @route   DELETE /api/events/:id
