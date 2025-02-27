@@ -11,8 +11,8 @@ connectDB();      // Connect to MongoDB
 const app = express();
 
 app.use(cors());          // Enable CORS for cross-origin requests
-app.use(express.json());  // Parse JSON request bodies
-
+app.use(express.json({ limit: '50mb' }));  // Parse JSON request bodies
+app.use(express.urlencoded({ limit: '50mb' , extended: true }));
 // Routes
 app.use('/api/users', userRoutes);
 app.use('/api/events', eventRoutes);

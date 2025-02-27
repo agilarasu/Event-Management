@@ -5,32 +5,67 @@ const User = require('../models/User');
 // @route   POST /api/events
 // @access  Private (Organizer role)
 const createEvent = async (req, res) => {
-  const { title, description, date, location, capacity, thumbnail } = req.body; // **Extract thumbnail from req.body**
+  const { title, description, date, location, capacity, thumbnail } = req.body; // Receive thumbnail as base64 string from req.body
 
   try {
-    const event = new Event({
-      title,
-      description,
-      date,
-      location,
-      capacity,
-      thumbnail, // **Include thumbnail in event creation**
-      organizer: req.user._id, // Logged-in user is the organizer
-    });
+      let imgurUrl = null; // Initialize Imgur URL
+      const IMGUR_CLIENT_ID = process.env.CLIENT_ID; // Use environment variable for Imgur Client ID
 
-    const createdEvent = await event.save();
+      if (thumbnail) { // Check if thumbnail (base64 string) is provided
+          const base64Image = thumbnail.split(',')[1]; // Remove Data URI prefix if present
 
-    // Update organizer's eventsOrganized array
-    const organizer = await User.findById(req.user._id);
-    organizer.eventsOrganized.push(createdEvent._id);
-    await organizer.save();
+          if (!base64Image) {
+              return res.status(400).json({ message: 'Invalid base64 image format.' });
+          }
 
-    res.status(201).json(createdEvent);
+          try {
+              const imgurResponse = await fetch("https://api.imgur.com/3/image", {
+                  method: "POST",
+                  headers: {
+                      Authorization: `Client-ID ${IMGUR_CLIENT_ID}`,
+                      "Content-Type": "application/json",
+                  },
+                  body: JSON.stringify({ image: base64Image, type: "base64" }),
+              });
+
+              const imgurResult = await imgurResponse.json();
+
+              if (!imgurResult.success) {
+                  throw new Error(imgurResult.data.error);
+              }
+
+              imgurUrl = imgurResult.data.link; // Store Imgur image URL
+          } catch (imgurError) {
+              console.error("Imgur upload error:", imgurError);
+              return res.status(500).json({ message: 'Failed to upload image to Imgur', error: imgurError.message });
+          }
+      }
+
+      const event = new Event({
+          title,
+          description,
+          date,
+          location,
+          capacity,
+          thumbnail: imgurUrl, // Store Imgur URL in thumbnail field
+          organizer: req.user._id,
+      });
+
+      const createdEvent = await event.save();
+
+      const organizer = await User.findById(req.user._id);
+      organizer.eventsOrganized.push(createdEvent._id);
+      await organizer.save();
+
+      res.status(201).json(createdEvent);
   } catch (error) {
-    res.status(500).json({ message: 'Server Error', error: error.message });
+      console.error("Error creating event:", error);
+      res.status(500).json({ message: 'Server Error', error: error.message });
   }
 };
 
+
+module.exports = { createEvent };
 // @desc    Get all events (public listing)
 // @route   GET /api/events
 // @access  Public
